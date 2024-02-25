@@ -88,6 +88,10 @@ function CharacterModule:applySpec(specData, specOptions)
      self:applyLevel(specData.Character.Level)
      levelApplied = true
    end
+--    -- Apply street cred level
+   if specData.Character.StreetCred then
+     self:applyStreetCred(specData.Character.StreetCred)
+   end
  end
 end
 -----@public
