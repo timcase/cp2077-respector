@@ -3,7 +3,7 @@
 -- -------------------------------------------------------------------------- --
 
 local cetVer = tonumber((GetVersion():gsub('^v(%d+)%.(%d+)%.(%d+)(.*)', function(major, minor, patch, wip)
-	return ('%d.%02d%02d%d'):format(major, minor, patch, (wip == '' and 0 or 1))
+  return ('%d.%02d%02d%d'):format(major, minor, patch, (wip == '' and 0 or 1))
 end))) or 1.21
 
 -- -------------------------------------------------------------------------- --
@@ -12,7 +12,8 @@ end))) or 1.21
 -- Enables debug output in the console.
 -- -------------------------------------------------------------------------- --
 
-local debugMode = false
+local debugMode = true
+print(('[DEBUG] Respector: Debug mode is %s.'):format(debugMode and 'enabled' or 'disabled'))
 
 -- -------------------------------------------------------------------------- --
 -- Developer Mode
@@ -24,26 +25,27 @@ local debugMode = false
 -- 5. Recreates default confing file on every mod load.
 -- -------------------------------------------------------------------------- --
 
-local devMode = false
+local devMode = true
+print(('[DEBUG] Respector: Developer mode is %s.'):format(devMode and 'enabled' or 'disabled'))
 
 -- -------------------------------------------------------------------------- --
 
 local coreReq = 'mod.lua'
 
 if cetVer <= 1.0906 then
-	coreReq = 'plugins/cyber_engine_tweaks/mods/respector/mod'
+  coreReq = 'plugins/cyber_engine_tweaks/mods/respector/mod'
 
-	if package.loaded[coreReq] ~= nil then
-		package.loaded[coreReq] = nil
+  if package.loaded[coreReq] ~= nil then
+    package.loaded[coreReq] = nil
 
-		if devMode then
-			package.loaded[coreReq .. '-state'] = nil
-		end
+    if devMode then
+      package.loaded[coreReq .. '-state'] = nil
+    end
 
-		if debugMode then
-			print(('[DEBUG] Respector: Reloaded module %q.'):format(coreReq))
-		end
-	end
+    if debugMode then
+      print(('[DEBUG] Respector: Reloaded module %q.'):format(coreReq))
+    end
+  end
 end
 
 local api = {}
@@ -58,41 +60,41 @@ local Tweaker = mod.require('mod/Tweaker')
 local tweaker = Tweaker:new(respector)
 
 if mod.config.useModApi or mod.config.useGlobalApi then
-	if mod.debug then
-		print(('[DEBUG] Respector: Initializing CLI...'))
-	end
+  if mod.debug then
+    print(('[DEBUG] Respector: Initializing CLI...'))
+  end
 
-	local cli = mod.require('mod/ui/cli')
+  local cli = mod.require('mod/ui/cli')
 
-	cli.init(respector, tweaker)
+  cli.init(respector, tweaker)
 
-	if mod.config.useModApi then
-		api = cli.getModApi()
-	end
+  if mod.config.useModApi then
+    api = cli.getModApi()
+  end
 end
 
 if mod.config.useGui then
-	if mod.debug then
-		print(('[DEBUG] Respector: Initializing GUI...'))
-	end
+  if mod.debug then
+    print(('[DEBUG] Respector: Initializing GUI...'))
+  end
 
-	local gui = mod.require('mod/ui/gui')
+  local gui = mod.require('mod/ui/gui')
 
-	registerForEvent('onInit', function()
-		if devMode then
-			local Compiler = mod.require('mod/Compiler')
-			local compiler = Compiler:new()
+  registerForEvent('onInit', function()
+    if devMode then
+      local Compiler = mod.require('mod/Compiler')
+      local compiler = Compiler:new()
 
-			compiler:run()
-		end
+      compiler:run()
+    end
 
-		gui.init(respector, tweaker)
-	end)
+    gui.init(respector, tweaker)
+  end)
 
-	registerForEvent('onOverlayOpen', gui.onOverlayOpen)
-	registerForEvent('onOverlayClose', gui.onOverlayClose)
+  registerForEvent('onOverlayOpen', gui.onOverlayOpen)
+  registerForEvent('onOverlayClose', gui.onOverlayClose)
 
-	registerForEvent('onDraw', gui.onDrawEvent)
+  registerForEvent('onDraw', gui.onDrawEvent)
 end
 
 registerForEvent('onUpdate', mod.onUpdateEvent)

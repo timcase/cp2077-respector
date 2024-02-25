@@ -5,45 +5,45 @@ local TransportModule = {}
 TransportModule.__index = TransportModule
 
 function TransportModule:new()
-	local this = { tweakDb = TweakDb:new() }
+  local this = { tweakDb = TweakDb:new() }
 
-	setmetatable(this, self)
+  setmetatable(this, self)
 
-	return this
+  return this
 end
 
 function TransportModule:prepare()
-	self.vehicleSystem = Game.GetVehicleSystem()
+  self.vehicleSystem = Game.GetVehicleSystem()
 end
 
 function TransportModule:release()
-	self.vehicleSystem = nil
+  self.vehicleSystem = nil
 end
 
 function TransportModule:fillSpec(specData, specOptions)
-	if specOptions.vehicles then
-		local vehicleSpecs = self:getVehicles()
+  if specOptions.vehicles then
+    local vehicleSpecs = self:getVehicles()
 
-		if vehicleSpecs then
-			specData.Vehicles = vehicleSpecs
-		end
-	end
+    if vehicleSpecs then
+      specData.Vehicles = vehicleSpecs
+    end
+  end
 end
 
 function TransportModule:applySpec(specData)
-	if specData.Vehicles and #specData.Vehicles > 0 then
-		self:unlockVehicles(specData.Vehicles)
-	end
+  if specData.Vehicles and #specData.Vehicles > 0 then
+    self:unlockVehicles(specData.Vehicles)
+  end
 end
 
 function TransportModule:getVehicles()
-	self.tweakDb:load('mod/data/tweakdb-meta')
+  self.tweakDb:load('mod/data/tweakdb-meta')
 
-	local vehicleSpecs = {}
-	local vehicles = self.vehicleSystem:GetPlayerUnlockedVehicles()
+  local vehicleSpecs = {}
+  local vehicles = self.vehicleSystem:GetPlayerUnlockedVehicles()
 
-	for _, vehicle in ipairs(vehicles) do
-		local vehicleMeta = self.tweakDb:resolve(vehicle.recordID)
+  for _, vehicle in ipairs(vehicles) do
+    local vehicleMeta = self.tweakDb:resolve(vehicle.recordID)
 
         if vehicleMeta then
             local vehicleSpec = {}
@@ -52,48 +52,48 @@ function TransportModule:getVehicles()
             vehicleSpec._order = self.tweakDb:order(vehicleMeta)
 
             table.insert(vehicleSpecs, vehicleSpec)
-		end
-	end
+    end
+  end
 
-	self.tweakDb:unload()
+  self.tweakDb:unload()
 
-	if #vehicleSpecs == 0 then
-		return nil
-	end
+  if #vehicleSpecs == 0 then
+    return nil
+  end
 
-	self.tweakDb:sort(vehicleSpecs)
+  self.tweakDb:sort(vehicleSpecs)
 
-	return vehicleSpecs
+  return vehicleSpecs
 end
 
 function TransportModule:unlockVehicle(vehicle)
-	local vehicleType = TweakDb.toVehicleType(vehicle)
+  local vehicleType = TweakDb.toVehicleType(vehicle)
 
-	self.vehicleSystem:EnablePlayerVehicle(vehicleType, true, false)
+  self.vehicleSystem:EnablePlayerVehicle(vehicleType, true, false)
 end
 
 function TransportModule:unlockVehicles(vehicles)
-	for _, vehicle in ipairs(vehicles) do
-		self:unlockVehicle(vehicle)
-	end
+  for _, vehicle in ipairs(vehicles) do
+    self:unlockVehicle(vehicle)
+  end
 end
 
 function TransportModule:isVehicleUnlocked(vehicle)
-	local tweakId = TweakDb.toVehicleTweakId(vehicle)
+  local tweakId = TweakDb.toVehicleTweakId(vehicle)
 
-	local vehicles = self.vehicleSystem:GetPlayerUnlockedVehicles()
+  local vehicles = self.vehicleSystem:GetPlayerUnlockedVehicles()
 
-	for _, vehicle in ipairs(vehicles) do
-		if tostring(tweakId) == tostring(vehicle.recordID) then
-			return true
-		end
-	end
+  for _, vehicle in ipairs(vehicles) do
+    if tostring(tweakId) == tostring(vehicle.recordID) then
+      return true
+    end
+  end
 
-	return false
+  return false
 end
 
 function TransportModule:isVehicleUnlockable(vehicleId)
-	return (vehicleId:find('_player$')) and true or false
+  return (vehicleId:find('_player$')) and true or false
 end
 
 return TransportModule

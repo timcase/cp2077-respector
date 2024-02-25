@@ -5,191 +5,191 @@ local Compiler = {}
 Compiler.__index = Compiler
 
 function Compiler:new()
-	local this = {}
+  local this = {}
 
-	setmetatable(this, self)
+  setmetatable(this, self)
 
-	return this
+  return this
 end
 
 function Compiler:run()
-	self:rehashTweakDbIds()
-	self:collectTweakDbInfo()
-	self:collectPerkInfo()
-	self:compileSamplePacks()
-	self:writeDefaultConfig()
+  self:rehashTweakDbIds()
+  self:collectTweakDbInfo()
+  self:collectPerkInfo()
+  self:compileSamplePacks()
+  self:writeDefaultConfig()
 end
 
 function Compiler:rehashTweakDbIds(stringsListPath, hashNamesDbPath, hashNamesCsvPath)
-	if not stringsListPath then
-		stringsListPath = mod.path('mod/data/tweakdb-strings.txt')
-	end
+  if not stringsListPath then
+    stringsListPath = mod.path('mod/data/tweakdb-strings.txt')
+  end
 
-	local fin = io.open(stringsListPath, 'r')
+  local fin = io.open(stringsListPath, 'r')
 
-	if not fin then
-		return
-	end
+  if not fin then
+    return
+  end
 
-	if not hashNamesDbPath then
-		hashNamesDbPath = mod.path('mod/data/tweakdb-ids.lua')
-	end
+  if not hashNamesDbPath then
+    hashNamesDbPath = mod.path('mod/data/tweakdb-ids.lua')
+  end
 
-	if not hashNamesCsvPath then
-		hashNamesCsvPath = mod.path('mod/data/tweakdb-ids.csv')
-	end
+  if not hashNamesCsvPath then
+    hashNamesCsvPath = mod.path('mod/data/tweakdb-ids.csv')
+  end
 
-	local TweakDb = mod.require('mod/helpers/TweakDb')
+  local TweakDb = mod.require('mod/helpers/TweakDb')
 
-	local fdb = io.open(hashNamesDbPath, 'w')
-	local fcsv = io.open(hashNamesCsvPath, 'w')
+  local fdb = io.open(hashNamesDbPath, 'w')
+  local fcsv = io.open(hashNamesCsvPath, 'w')
 
-	fdb:write('return {\n')
+  fdb:write('return {\n')
 
-	local allowedGroups = {
-		Ammo = true,
-		AttachmentSlots = true,
-		Items = true,
-		Vehicle = true,
-	}
+  local allowedGroups = {
+    Ammo = true,
+    AttachmentSlots = true,
+    Items = true,
+    Vehicle = true,
+  }
 
-	for line in fin:lines() do
-		local group, name = line:match('^(%w+)%.(.+)$')
-		local valid = false
+  for line in fin:lines() do
+    local group, name = line:match('^(%w+)%.(.+)$')
+    local valid = false
 
-		if not group then
-			name = line:match('^(<TDBID:[0-9A-Z]+:[0-9A-Z]+>)$')
-			if name then
-				valid = true
-			end
-		elseif allowedGroups[group] and not name:find('%.') and not name:find('_inline%d+$') then
-			valid = (group ~= 'Vehicle' or name:find('^v_'))
-			if valid then
-				name = group .. '.' .. name
-			end
-		end
+    if not group then
+      name = line:match('^(<TDBID:[0-9A-Z]+:[0-9A-Z]+>)$')
+      if name then
+        valid = true
+      end
+    elseif allowedGroups[group] and not name:find('%.') and not name:find('_inline%d+$') then
+      valid = (group ~= 'Vehicle' or name:find('^v_'))
+      if valid then
+        name = group .. '.' .. name
+      end
+    end
 
-		if valid then
+    if valid then
             local hash = TweakDb.toKey(name)
 
-			fdb:write(string.format('[0x%016X] = %q,\n', hash, name))
-			fcsv:write(string.format('%s,0x%016X\n', name, hash))
-		end
-	end
+      fdb:write(string.format('[0x%016X] = %q,\n', hash, name))
+      fcsv:write(string.format('%s,0x%016X\n', name, hash))
+    end
+  end
 
-	fdb:write('}')
+  fdb:write('}')
 
-	fin:close()
-	fdb:close()
-	fcsv:close()
+  fin:close()
+  fdb:close()
+  fcsv:close()
 
-	if mod.debug then
-		print(('[DEBUG] Respector: Rehashed TweakDBIDs using list %q.'):format(stringsListPath))
-	end
+  if mod.debug then
+    print(('[DEBUG] Respector: Rehashed TweakDBIDs using list %q.'):format(stringsListPath))
+  end
 end
 
 function Compiler:collectTweakDbInfo(outputCsvPath)
-	if not outputCsvPath then
-		outputCsvPath = mod.path('mod/data/tweakdb-info.csv')
-	end
+  if not outputCsvPath then
+    outputCsvPath = mod.path('mod/data/tweakdb-info.csv')
+  end
 
-	local fcsv = io.open(outputCsvPath, 'w')
+  local fcsv = io.open(outputCsvPath, 'w')
 
-	local TweakDb = mod.require('mod/helpers/TweakDb')
-	local tweakDb = TweakDb:new('mod/data/tweakdb-ids')
+  local TweakDb = mod.require('mod/helpers/TweakDb')
+  local tweakDb = TweakDb:new('mod/data/tweakdb-ids')
 
-	local normalize = function(str)
-		return str:gsub('"', '""'):gsub('“', '""'):gsub('’', '\''):gsub('–', '-')
-	end
+  local normalize = function(str)
+    return str:gsub('"', '""'):gsub('“', '""'):gsub('’', '\''):gsub('–', '-')
+  end
 
-	local bool = function(value)
-		return value and 'TRUE' or 'FALSE'
-	end
+  local bool = function(value)
+    return value and 'TRUE' or 'FALSE'
+  end
 
-	local boolopt = function(value)
-		return value and 'TRUE' or ''
-	end
+  local boolopt = function(value)
+    return value and 'TRUE' or ''
+  end
 
-	local iconicModId = TweakDBID('Quality.IconicItem')
+  local iconicModId = TweakDBID('Quality.IconicItem')
 
-	for key, id in tweakDb:each() do
-		local record = TweakDB:GetRecord(TweakDb.toTweakId(key))
+  for key, id in tweakDb:each() do
+    local record = TweakDB:GetRecord(TweakDb.toTweakId(key))
 
-		if record and record:IsA('gamedataBaseObject_Record') then
-			local name = GetLocalizedTextByKey(record:DisplayName())
-			local desc = ''
-			local ability = ''
-			local category = ''
-			local quality = ''
-			local craftable = false
-			local iconic = false
+    if record and record:IsA('gamedataBaseObject_Record') then
+      local name = GetLocalizedTextByKey(record:DisplayName())
+      local desc = ''
+      local ability = ''
+      local category = ''
+      local quality = ''
+      local craftable = false
+      local iconic = false
 
-			if record:IsA('gamedataItem_Record') and (record:ItemCategory() or record:IsPart()) then
-				desc = GetLocalizedTextByKey(record:LocalizedDescription())
-				category = record:IsPart() and 'Mod' or NameToString(record:ItemCategory():Name())
+      if record:IsA('gamedataItem_Record') and (record:ItemCategory() or record:IsPart()) then
+        desc = GetLocalizedTextByKey(record:LocalizedDescription())
+        category = record:IsPart() and 'Mod' or NameToString(record:ItemCategory():Name())
 
-				local qualityData = record:Quality()
-				if qualityData and qualityData:Value() > 0 then
-					quality = ('%d-%s'):format(qualityData:Value() + 1, qualityData:Name())
-				end
+        local qualityData = record:Quality()
+        if qualityData and qualityData:Value() > 0 then
+          quality = ('%d-%s'):format(qualityData:Value() + 1, qualityData:Name())
+        end
 
-				local attachData = record:GetOnAttachItem(0)
-				if attachData then
-					local uiData = attachData:UIData()
-					if uiData then
-						ability = GetLocalizedText(uiData:LocalizedDescription())
-					end
-				end
+        local attachData = record:GetOnAttachItem(0)
+        if attachData then
+          local uiData = attachData:UIData()
+          if uiData then
+            ability = GetLocalizedText(uiData:LocalizedDescription())
+          end
+        end
 
-				local craftingData = record:CraftingData()
-				if craftingData then
-					craftable = true
-				end
+        local craftingData = record:CraftingData()
+        if craftingData then
+          craftable = true
+        end
 
-				for _, statMod in ipairs(record:StatModifiers()) do
+        for _, statMod in ipairs(record:StatModifiers()) do
                     if statMod:GetID() == iconicModId then
                         iconic = true
                         break
                     end
-				end
-			elseif record:IsA('gamedataVehicle_Record') then
-				category = 'Vehicle'
-			end
+        end
+      elseif record:IsA('gamedataVehicle_Record') then
+        category = 'Vehicle'
+      end
 
-			if name ~= '' and category ~= '' then
-				fcsv:write(('0x%016X,%s,"%s","%s","%s","%s","%s","%s","%s"\n'):format(
-				    key, id, normalize(name), normalize(desc), normalize(ability),
-				    category, quality, boolopt(iconic), bool(craftable)
-				))
-			end
-		end
-	end
+      if name ~= '' and category ~= '' then
+        fcsv:write(('0x%016X,%s,"%s","%s","%s","%s","%s","%s","%s"\n'):format(
+            key, id, normalize(name), normalize(desc), normalize(ability),
+            category, quality, boolopt(iconic), bool(craftable)
+        ))
+      end
+    end
+  end
 
-	tweakDb:unload()
+  tweakDb:unload()
 
-	fcsv:close()
+  fcsv:close()
 
-	if mod.debug then
-		print(('[DEBUG] Respector: Collected TweakDB display names and descriptions.'))
-	end
+  if mod.debug then
+    print(('[DEBUG] Respector: Collected TweakDB display names and descriptions.'))
+  end
 end
 
 function Compiler:collectPerkInfo(outputInfoPath, outputSchemaPath)
-	if not outputInfoPath then
-		outputInfoPath = mod.path('mod/data/perks-info.lua')
-	end
+  if not outputInfoPath then
+    outputInfoPath = mod.path('mod/data/perks-info.lua')
+  end
 
-	if not outputSchemaPath then
-		outputSchemaPath = mod.path('mod/data/perks-schema.lua')
-	end
+  if not outputSchemaPath then
+    outputSchemaPath = mod.path('mod/data/perks-schema.lua')
+  end
 
-	local finfo = io.open(outputInfoPath, 'w')
-	finfo:write('return {\n')
+  local finfo = io.open(outputInfoPath, 'w')
+  finfo:write('return {\n')
 
-	local fschema = io.open(outputSchemaPath, 'w')
-	fschema:write('return {\n')
+  local fschema = io.open(outputSchemaPath, 'w')
+  fschema:write('return {\n')
 
-	local sep = false
+  local sep = false
 
     --for _, attrRec in ipairs(TweakDB:GetRecords('gamedataAttribute_Record')) do
     --    local attr = attrRec:EnumName()
@@ -273,138 +273,138 @@ function Compiler:collectPerkInfo(outputInfoPath, outputSchemaPath)
 end
 
 function Compiler:compileSamplePacks(samplePacksDir, samplePacks)
-	if not samplePacksDir then
-		samplePacksDir = mod.dir('samples/packs')
-	end
+  if not samplePacksDir then
+    samplePacksDir = mod.dir('samples/packs')
+  end
 
-	if not samplePacks then
-		samplePacks = mod.load('mod/data/sample-packs')
-	end
+  if not samplePacks then
+    samplePacks = mod.load('mod/data/sample-packs')
+  end
 
-	local partSlots = mod.load('mod/data/attachment-slots')
+  local partSlots = mod.load('mod/data/attachment-slots')
 
-	local SpecStore = mod.require('mod/stores/SpecStore')
-	local specStore = SpecStore:new(samplePacksDir)
+  local SpecStore = mod.require('mod/stores/SpecStore')
+  local specStore = SpecStore:new(samplePacksDir)
 
-	local TweakDb = mod.require('mod/helpers/TweakDb')
-	local tweakDb = TweakDb:new(true)
+  local TweakDb = mod.require('mod/helpers/TweakDb')
+  local tweakDb = TweakDb:new(true)
 
-	for _, samplePack in ipairs(samplePacks) do
-		if mod.debug then
-			print(('[DEBUG] Respector: Creating sample pack %q...'):format(samplePack.name))
-		end
+  for _, samplePack in ipairs(samplePacks) do
+    if mod.debug then
+      print(('[DEBUG] Respector: Creating sample pack %q...'):format(samplePack.name))
+    end
 
-		local specName = samplePack.name
-		local specData = {}
+    local specName = samplePack.name
+    local specData = {}
 
-		specData._comment = samplePack.desc or ''
+    specData._comment = samplePack.desc or ''
 
-		if samplePack.items then
-			local itemSpecs = {}
+    if samplePack.items then
+      local itemSpecs = {}
 
-			samplePack.items.ref = false
+      samplePack.items.ref = false
 
-			for _, itemMeta in tweakDb:filter(samplePack.items) do
-				if itemMeta.kind ~= 'Pack' then
-					local itemSpec = {}
+      for _, itemMeta in tweakDb:filter(samplePack.items) do
+        if itemMeta.kind ~= 'Pack' then
+          local itemSpec = {}
 
-					itemSpec._comment = tweakDb:describe(itemMeta, true, true)
-					itemSpec._order = tweakDb:order(itemMeta)
+          itemSpec._comment = tweakDb:describe(itemMeta, true, true)
+          itemSpec._order = tweakDb:order(itemMeta)
 
-					if itemMeta.comment then
-						itemSpec._comment = itemSpec._comment .. '\n' .. itemMeta.comment --itemMeta.comment:gsub('([.!?]) ', '%1\n')
-					end
+          if itemMeta.comment then
+            itemSpec._comment = itemSpec._comment .. '\n' .. itemMeta.comment --itemMeta.comment:gsub('([.!?]) ', '%1\n')
+          end
 
-					if itemMeta.desc then
-						itemSpec._comment = itemSpec._comment .. '\n' .. itemMeta.desc:gsub('([.!?]) ', '%1\n')
-					end
+          if itemMeta.desc then
+            itemSpec._comment = itemSpec._comment .. '\n' .. itemMeta.desc:gsub('([.!?]) ', '%1\n')
+          end
 
-					itemSpec.id = TweakDb.toItemAlias(itemMeta.id)
+          itemSpec.id = TweakDb.toItemAlias(itemMeta.id)
 
-					if samplePack.items.kind == 'Cyberware' then
-						local itemSlots = {}
+          if samplePack.items.kind == 'Cyberware' then
+            local itemSlots = {}
 
-						for _, partSlot in ipairs(partSlots) do
-							if tweakDb:match(itemMeta, partSlot.criteria) then
-								local matched = true
+            for _, partSlot in ipairs(partSlots) do
+              if tweakDb:match(itemMeta, partSlot.criteria) then
+                local matched = true
 
-								if itemMeta.group2 == 'Cyberdeck' then
-									local slotsNum = Quality.toValue(itemMeta.quality) + 1
+                if itemMeta.group2 == 'Cyberdeck' then
+                  local slotsNum = Quality.toValue(itemMeta.quality) + 1
 
-									if partSlot.index > slotsNum then
-										matched = false
-									end
-								end
+                  if partSlot.index > slotsNum then
+                    matched = false
+                  end
+                end
 
-								if matched then
-									table.insert(itemSlots, { slot = partSlot.slot })
-								end
-							end
-						end
+                if matched then
+                  table.insert(itemSlots, { slot = partSlot.slot })
+                end
+              end
+            end
 
-						if #itemSlots > 0 then
-							itemSpec.slots = itemSlots
-							itemSpec._inline = false
-						end
+            if #itemSlots > 0 then
+              itemSpec.slots = itemSlots
+              itemSpec._inline = false
+            end
 
-					elseif samplePack.name == 'stash-wall' then
-						if itemMeta.quest then
-							itemSpec.quest = false
-						end
-					end
+          elseif samplePack.name == 'stash-wall' then
+            if itemMeta.quest then
+              itemSpec.quest = false
+            end
+          end
 
-					table.insert(itemSpecs, itemSpec)
-				end
-			end
+          table.insert(itemSpecs, itemSpec)
+        end
+      end
 
-			tweakDb:sort(itemSpecs)
+      tweakDb:sort(itemSpecs)
 
-			specData.Inventory = itemSpecs
-		end
+      specData.Inventory = itemSpecs
+    end
 
-		if samplePack.vehicles then
-			local vehicleSpecs = {}
+    if samplePack.vehicles then
+      local vehicleSpecs = {}
 
-			samplePack.vehicles.ref = false
+      samplePack.vehicles.ref = false
 
-			for _, vehicleMeta in tweakDb:filter(samplePack.vehicles) do
-				local vehicleSpec = {}
+      for _, vehicleMeta in tweakDb:filter(samplePack.vehicles) do
+        local vehicleSpec = {}
 
-				vehicleSpec[1] = vehicleMeta.id
-				vehicleSpec._comment = tweakDb:describe(vehicleMeta)
-				vehicleSpec._order = tweakDb:order(vehicleMeta)
+        vehicleSpec[1] = vehicleMeta.id
+        vehicleSpec._comment = tweakDb:describe(vehicleMeta)
+        vehicleSpec._order = tweakDb:order(vehicleMeta)
 
-				table.insert(vehicleSpecs, vehicleSpec)
-			end
+        table.insert(vehicleSpecs, vehicleSpec)
+      end
 
-			tweakDb:sort(vehicleSpecs)
+      tweakDb:sort(vehicleSpecs)
 
-			specData.Vehicles = vehicleSpecs
-		end
+      specData.Vehicles = vehicleSpecs
+    end
 
-		specStore:writeSpec(specName, specData)
-	end
+    specStore:writeSpec(specName, specData)
+  end
 
-	tweakDb:unload()
+  tweakDb:unload()
 end
 
 function Compiler:writeDefaultConfig(configPath)
-	local Configuration = mod.require('mod/Configuration')
-	local configuration = Configuration:new()
+  local Configuration = mod.require('mod/Configuration')
+  local configuration = Configuration:new()
 
-	configuration:writeDefaults(configPath)
+  configuration:writeDefaults(configPath)
 end
 
 function Compiler:writeDefaultSpec()
-	local SpecStore = mod.require('mod/stores/SpecStore')
-	local specStore = SpecStore:new()
+  local SpecStore = mod.require('mod/stores/SpecStore')
+  local specStore = SpecStore:new()
 
-	specStore:writeSpec(nil, {
-		_comment = {
-			'This is just a placeholder.',
-			'If you want to try to load a spec then copy "samples/Noname.lua" here.',
-		}
-	})
+  specStore:writeSpec(nil, {
+    _comment = {
+      'This is just a placeholder.',
+      'If you want to try to load a spec then copy "samples/Noname.lua" here.',
+    }
+  })
 end
 
 return Compiler
