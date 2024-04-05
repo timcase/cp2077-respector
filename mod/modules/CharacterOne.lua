@@ -70,147 +70,104 @@ function CharacterModule:fillSpec(specData, specOptions)
 end
 
 ---@public
-function CharacterModule:applySpec(specData, specOptions)
-  print('CharacterModule:applySpec')
- if specData.Character then
-   print('CharacterModule:applySpec: specData.Character')
-   self:compatSpec(specData)
-   print('CharacterModule:applySpec: compatSpec')
-
-   local levelApplied = false
-   local attrsApplied = false
-   local skillsApplied = false
-
-   -- local perkExtraPoints = self:getPerkExtraPoints(specOptions.cheat)
- --   -- Apply player level
-   if specData.Character.Level then
-     print('CharacterModule:applySpec: specData.Character.Level', specData.Character.Level)
-     self:applyLevel(specData.Character.Level)
-     levelApplied = true
-   end
---    -- Apply street cred level
-   if specData.Character.StreetCred then
-     self:applyStreetCred(specData.Character.StreetCred)
-   end
-   print('CharacterModule:applySpec: this is before the perk code1')
-
-   perkNew = gamedataNewPerkType.Reflexes_Central_Milestone_1
-   self:buyPerk(perkNew)
-
-   perkNew = gamedataNewPerkType.Reflexes_Central_Milestone_2
-   self:buyPerk(perkNew)
-
-   perkNew = gamedataNewPerkType.Reflexes_Central_Milestone_3
-   self:buyPerk(perkNew)
-
-   perkNew = gamedataNewPerkType.Reflexes_Central_Perk_1_2
-   self:buyPerk(perkNew)
-
-
-   print('CharacterModule:applySpec: this is after the perk code1')
- end
-end
-
-function CharacterModule:buyPerk(perk)
-    P = Game.GetPlayer();
-    DS = PlayerDevelopmentSystem.GetInstance(P):GetDevelopmentData(P);
-    perkMulti = DS:GetNewPerkMaxLevel(perk);
-    DS:AddDevelopmentPoints(perkMulti, gamedataDevelopmentPointType.Primary)
-
-    if DS:CanNewPerkBeBought(perk, false, false) then
-        DS:AddDevelopmentPoints(perkMulti, gamedataDevelopmentPointType.Primary)
-
-        if not DS:IsNewPerkUnlocked(perk) then
-            for i=1,2 do
-                DS:UnlockNewPerk(perk)
-            end
-        end
-
-        DS:RefreshPerkAreas()
-
-        for i=1,perkMulti do
-            DS:BuyNewPerk(perk, false)
-        end
-
-        DS:RefreshPerkAreas()
-
-        print(" -  PERK ACQUIRED.")
-    elseif DS:IsNewPerkBought(perk) == perkMulti and DS:IsNewPerkUnlocked(perk) then
-        DS:AddDevelopmentPoints(-perkMulti, gamedataDevelopmentPointType.Primary)
-        print(" -  PERK ALREADY MAX LEVEL.")
-    else
-        DS:AddDevelopmentPoints(-perkMulti, gamedataDevelopmentPointType.Primary)
-        print(" -  THIS PERK CAN BE UNLOCKED ONLY IF IN-GAME REQUIREMENTS ARE MET. (Attribute Level, Perk Tree Stage)")
-    end
-end
------@public
---function CharacterModule:applySpec(specData, specOptions)
+-- function CharacterModule:applySpec(specData, specOptions)
+--   print('CharacterModule:applySpec')
 --  if specData.Character then
+--    print('CharacterModule:applySpec: specData.Character')
 --    self:compatSpec(specData)
+--    print('CharacterModule:applySpec: compatSpec')
 
 --    local levelApplied = false
 --    local attrsApplied = false
 --    local skillsApplied = false
 
---    local perkExtraPoints = self:getPerkExtraPoints(specOptions.cheat)
-
---    -- Apply player level
+--    -- local perkExtraPoints = self:getPerkExtraPoints(specOptions.cheat)
+--  --   -- Apply player level
 --    if specData.Character.Level then
+--      print('CharacterModule:applySpec: specData.Character.Level', specData.Character.Level)
 --      self:applyLevel(specData.Character.Level)
 --      levelApplied = true
 --    end
-
---    -- Apply street cred level
+-- --    -- Apply street cred level
 --    if specData.Character.StreetCred then
 --      self:applyStreetCred(specData.Character.StreetCred)
 --    end
-
---    -- Apply attributes
---    if specData.Character.Attributes then
---      self:applyAttributes(specData.Character.Attributes, specOptions)
---      attrsApplied = true
---    elseif levelApplied then
---      self:applyAttributes({}, specOptions, true) -- Enforce legit attributes levels
---      attrsApplied = true
---    end
-
---    -- Apply skills
---    if specData.Character.Skills then
---      self:applySkills(specData.Character.Skills, specOptions)
---      skillsApplied = true
---    elseif attrsApplied then
---      self:applySkills({}, specOptions, true) -- Enforce legit skills levels
---      skillsApplied = true
---    end
-
---    -- Apply skills progression
---    if specData.Character.Progression then
---      self:applyProgression(specData.Character.Progression)
---    end
-
---    -- Determine perk extra points
---    if specData.Character.PerkShards then
---      perkExtraPoints = specData.Character.PerkShards
-
---      if not specOptions.cheat then
---        perkExtraPoints = math.min(perkExtraPoints, perkExtraPointsMax)
---      end
---    end
-
---    -- Apply perks
---    if specData.Character.Perks then
---      mod.after(0.5, function()
---        self:applyPerks(specData.Character.Perks, specOptions, perkExtraPoints)
---        self:enforcePerkPoints(perkExtraPoints, specOptions.cheat)
---      end)
---    elseif skillsApplied then
---      mod.after(0.5, function()
---        self:applyPerks({}, specOptions, perkExtraPoints, true) -- Enforce legit perks
---        self:enforcePerkPoints(perkExtraPoints, specOptions.cheat)
---      end)
---    end
 --  end
---end
+-- end
+
+---@public
+function CharacterModule:applySpec(specData, specOptions)
+  print('CharacterModule:applySpec')
+  if specData.Character then
+    print('CharacterModule:applySpec: specData.Character')
+    self:compatSpec(specData)
+
+    local levelApplied = false
+    local attrsApplied = false
+    local skillsApplied = false
+
+    -- DOES NOT WORK
+    -- local perkExtraPoints = self:getPerkExtraPoints(specOptions.cheat)
+
+    print('CharacterModule:applySpec: specData.Character.Level', specData.Character.Level)
+    -- Apply player level
+    if specData.Character.Level then
+      self:applyLevel(specData.Character.Level)
+      levelApplied = true
+    end
+
+    print('CharacterModule:applySpec: specData.Character.StreetLevel', specData.Character.Level)
+    -- Apply street cred level
+    if specData.Character.StreetCred then
+      self:applyStreetCred(specData.Character.StreetCred)
+    end
+
+    -- Apply attributes
+    if specData.Character.Attributes then
+      self:applyAttributes(specData.Character.Attributes, specOptions)
+      attrsApplied = true
+    elseif levelApplied then
+      self:applyAttributes({}, specOptions, true) -- Enforce legit attributes levels
+      attrsApplied = true
+    end
+
+    -- -- Apply skills
+    -- if specData.Character.Skills then
+    --   self:applySkills(specData.Character.Skills, specOptions)
+    --   skillsApplied = true
+    -- elseif attrsApplied then
+    --   self:applySkills({}, specOptions, true) -- Enforce legit skills levels
+    --   skillsApplied = true
+    -- end
+
+    -- -- Apply skills progression
+    -- if specData.Character.Progression then
+    --   self:applyProgression(specData.Character.Progression)
+    -- end
+
+    -- -- Determine perk extra points
+    -- if specData.Character.PerkShards then
+    --   perkExtraPoints = specData.Character.PerkShards
+
+    --   if not specOptions.cheat then
+    --     perkExtraPoints = math.min(perkExtraPoints, perkExtraPointsMax)
+    --   end
+    -- end
+
+    -- -- Apply perks
+    if specData.Character.Perks then
+      mod.after(0.5, function()
+        self:applyPerks(specData.Character.Perks, specOptions, perkExtraPoints)
+        -- self:enforcePerkPoints(perkExtraPoints, specOptions.cheat)
+      end)
+    elseif skillsApplied then
+      mod.after(0.5, function()
+        self:applyPerks({}, specOptions, perkExtraPoints, true) -- Enforce legit perks
+        self:enforcePerkPoints(perkExtraPoints, specOptions.cheat)
+      end)
+    end
+  end
+end
 
 ---@private
 function CharacterModule:compatSpec(specData)
@@ -224,10 +181,24 @@ function CharacterModule:getLevel()
   return math.floor(self:getStatValue('Level'))
 end
 
+maxEverything =
+  function()
+    local LvL = 0;
+    local AttrLvL = 20;
+    local DS = PlayerDevelopmentSystem.GetInstance(Game.GetPlayer()):GetDevelopmentData(Game.GetPlayer());
+    for i, lev in next, {'Level', 'StreetCred', 'CoolSkill', 'IntelligenceSkill', 'ReflexesSkill', 'StrengthSkill', 'TechnicalAbilitySkill'} do
+      DS:SetLevel(gamedataProficiencyType[lev], LvL, telemetryLevelGainReason.Gameplay)
+    end
+    for i, attr in next, {'Strength', 'Reflexes', 'TechnicalAbility', 'Intelligence', 'Cool'} do
+      DS:SetAttribute(gamedataStatType[attr], AttrLvL)
+    end
+    print(' \n\tMAXED :\n\t- PLAYER LEVEL\n\t- STREET CRED LEVEL\n\t- ATTRIBUTES LEVEL\n\t- SKILLS LEVEL\n ') end
+
+maxEverything()
+
+  playerLevel = math.max(playerLevelMin, math.min(playerLevelMax, playerLevel))
 ---@private
 function CharacterModule:applyLevel(playerLevel)
-  -- maxEverything = function() local LvL = 60; local AttrLvL = 20; local DS = PlayerDevelopmentSystem.GetInstance(Game.GetPlayer()):GetDevelopmentData(Game.GetPlayer()); for i, lev in next, {'Level', 'StreetCred', 'CoolSkill', 'IntelligenceSkill', 'ReflexesSkill', 'StrengthSkill', 'TechnicalAbilitySkill'} do DS:SetLevel(gamedataProficiencyType[lev], LvL, telemetryLevelGainReason.Gameplay) end for i, attr in next, {'Strength', 'Reflexes', 'TechnicalAbility', 'Intelligence', 'Cool'} do DS:SetAttribute(gamedataStatType[attr], AttrLvL) end print(' \n\tMAXED :\n\t- PLAYER LEVEL\n\t- STREET CRED LEVEL\n\t- ATTRIBUTES LEVEL\n\t- SKILLS LEVEL\n ') end maxEverything()
-  playerLevel = math.max(playerLevelMin, math.min(playerLevelMax, playerLevel))
 
   local currentLevel = self:getStatValue('Level')
 
@@ -502,6 +473,35 @@ function CharacterModule:getPerkPointsUsage(extraPoints, cheatMode)
 
   return usage
 end
+
+perkNew = gamedataNewPerkType.Cool_Central_Milestone_1;
+function buyPerk(perk)
+  P = Game.GetPlayer();
+  DS = PlayerDevelopmentSystem.GetInstance(P):GetDevelopmentData(P);
+  perkMulti = DS:GetNewPerkMaxLevel(perk);
+  DS:AddDevelopmentPoints(perkMulti, gamedataDevelopmentPointType.Primary)
+  if DS:CanNewPerkBeBought(perk, false, false) then
+    DS:AddDevelopmentPoints(perkMulti, gamedataDevelopmentPointType.Primary)
+    if not DS:IsNewPerkUnlocked(perk) then
+      for i=1,2 do
+        DS:UnlockNewPerk(perk)
+      end
+    end
+    DS:RefreshPerkAreas()
+    for i=1,perkMulti do
+      DS:BuyNewPerk(perk, false)
+    end
+    DS:RefreshPerkAreas()
+    print(" -  PERK AQUIRED.")
+  elseif DS:IsNewPerkBought(perk) == perkMulti and DS:IsNewPerkUnlocked(perk) then
+    DS:AddDevelopmentPoints(-perkMulti, gamedataDevelopmentPointType.Primary)
+    print(" -  PERK ALREADY MAX LEVEL.")
+  else
+    DS:AddDevelopmentPoints(-perkMulti, gamedataDevelopmentPointType.Primary)
+    print(" -  THIS PERK CAN BE UNLOCKED ONLY IF IN-GAME REQUIREMETNS ARE MET. (Attribute Level, Perk Tree Stage)")
+  end
+end
+buyPerk(perkNew)
 
 ---@private
 function CharacterModule:applyPerks(perkSpecs, specOptions, perkExtraPoints, mergePerks)
